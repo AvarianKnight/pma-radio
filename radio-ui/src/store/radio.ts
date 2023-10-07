@@ -15,3 +15,5 @@ export const uiRadioChannel = writable(0);
 export const radioChannelOffset = writable(0);
 export const maxDecimalPlaces = writable(2);
 export const maxChannels = writable(1000);
+
+export const radioWasInit = writable(false);

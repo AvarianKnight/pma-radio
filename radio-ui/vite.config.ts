@@ -46,6 +46,7 @@ export default defineConfig({
 			{ find: "$utils", replacement: path.resolve(projectRootDir, 'src/utils') },
 		]
 	},
+	assetsInclude: ["./src/lib/assets/**/*.ogg"],
 	build: {
 		outDir: 'build',
 		rollupOptions: {

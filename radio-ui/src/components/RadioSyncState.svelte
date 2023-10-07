@@ -12,12 +12,14 @@
 		radioVolume,
 		visible,
         uiRadioChannel,
+        radioWasInit,
 	} from "../store/radio";
 
 	useNuiEvent("openUi", ([channel, volume]: [number, number]) => {
 		clientRadioChannel.set(channel === 0 ? $radioChannelOffset : channel);
 		uiRadioChannel.set(channel === 0 ? $radioChannelOffset : channel);
 		radioVolume.set(volume);
+		radioWasInit.set(true);
 		visible.set(true);
 	});
 
