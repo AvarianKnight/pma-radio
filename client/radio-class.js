@@ -45,7 +45,7 @@ class RadioHandler {
 
 				SendNUIMessage({
 					action: "updateClientRadioChannel",
-					data: radioChannel
+					data: value
 				})
 			}
 		})
