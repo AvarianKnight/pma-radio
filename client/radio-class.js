@@ -34,8 +34,20 @@ class RadioHandler {
 				})
 			}
 		})
+
 		on("pma-voice:radioActive", async (isActive) => {
 			this.#talkingOnRadio = isActive;
+		})
+
+		AddStateBagChangeHandler("radioChannel", `player:${GetPlayerServerId(PlayerId())}`, (_, __, value) => {
+			if (value !== this.#radioChannel) {
+				this.#radioChannel = value;
+
+				SendNUIMessage({
+					action: "updateClientRadioChannel",
+					data: radioChannel
+				})
+			}
 		})
 	}
 
