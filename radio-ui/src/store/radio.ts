@@ -12,7 +12,7 @@ export const clientRadioChannel = writable(0);
 export const uiRadioChannel = writable(0);
 
 // Config
-export const radioChannelOffset = writable(0);
+export const defaultRadioChannel = writable(21);
 export const maxDecimalPlaces = writable(2);
 export const maxChannels = writable(1000);
 

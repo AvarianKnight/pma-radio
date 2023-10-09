@@ -17,6 +17,8 @@ class RadioHandler {
 	#talkingOnRadio = false;
 	#runningRadioOpenTick = false;
 	#disableRadioAnim = false;
+	#defaultRadio = GetConvarInt("radio_defaultStartChannel", 21);
+
 	constructor() {
 		// the current radio channel
 		const curRadio = LocalPlayer.state.radioChannel
@@ -76,6 +78,23 @@ class RadioHandler {
 		}
 	}
 
+	/**
+	 * @param {number} defaultChannel the default channel to set to
+	 */
+	set DefaultRadioChannel(defaultChannel) {
+		this.#defaultRadio = defaultChannel;
+		if (this.#uiReady) {
+			SendNUIMessage({
+				action: "updateDefaultRadio",
+				data: defaultChannel
+			})
+		}
+	}
+
+	get DefaultRadioChannel() {
+		return this.#defaultRadio;
+	}
+
 	async #handleRadioAnim() {
 		if (this.#runningRadioOpenTick || this.#disableRadioAnim) return;
 		LocalPlayer.state.set("showRadioProp", true, true)
@@ -106,11 +125,11 @@ class RadioHandler {
 				clearTick(animTick);
 				return;
 			}
-            const [hasWeapon, curWeapon] = GetCurrentPedWeapon(ped, 1)
+			const [hasWeapon, curWeapon] = GetCurrentPedWeapon(ped, 1)
 
 			// its easier this way
 			if (curWeapon !== UNARMED) {
-                SetCurrentPedWeapon(ped, UNARMED, true)
+				SetCurrentPedWeapon(ped, UNARMED, true)
 			}
 
 			if (this.#talkingOnRadio && curState !== 1) {
@@ -147,7 +166,6 @@ class RadioHandler {
 
 		this.#handleRadioAnim()
 
-		// if we have a tick then clear it out
 		this.#handleRadioTick();
 
 		LocalPlayer.state.radioOpen = open;
@@ -188,6 +206,8 @@ class RadioHandler {
 				data: radioChannel
 			})
 		}
+
+		console.log(`radioChannel got set to ${radioChannel}`)
 	}
 
 	/**
@@ -215,6 +235,12 @@ class RadioHandler {
 	 * @param {number} isDisabled if we disable we add the '32' bit [PlayerDisabledRadio] otherwise we remove it
 	 */
 	set RadioDisabled(isDisabled) {
+		if (this.#uiReady) {
+			SendNUIMessage({
+				action: "updateDisabled",
+				data: isDisabled
+			})
+		}
 		// 32 is PlayerDisabledRadio
 		isDisabled ? exports['pma-voice'].addRadioDisableBit(32) : exports['pma-voice'].removeRadioDisableBit(32)
 	}
@@ -254,45 +280,45 @@ globalThis.radioHandler = new RadioHandler();
 globalThis.Delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
 globalThis.loadModel = async (modelHash) => {
-    RequestModel(modelHash);
-    const timeout = GetGameTimer() + 500;
-    while (!HasModelLoaded(modelHash)) {
-        if (timeout < GetGameTimer()) {
-            SetModelAsNoLongerNeeded(modelHash);
-            return console.log("Model didn't load");
-        }
-        await Delay(0);
-    }
+	RequestModel(modelHash);
+	const timeout = GetGameTimer() + 500;
+	while (!HasModelLoaded(modelHash)) {
+		if (timeout < GetGameTimer()) {
+			SetModelAsNoLongerNeeded(modelHash);
+			return console.log("Model didn't load");
+		}
+		await Delay(0);
+	}
 
-    SetModelAsNoLongerNeeded(modelHash);
+	SetModelAsNoLongerNeeded(modelHash);
 };
 
 const pushEntToPlyMap = (serverId, ent) => {
-    plyEntMap.set(serverId, ent);
+	plyEntMap.set(serverId, ent);
 };
 
 const handleRadioProp = async (ply, serverId) => {
-    const model = GetHashKey("prop_cs_hand_radio");
+	const model = GetHashKey("prop_cs_hand_radio");
 
-    const ped = GetPlayerPed(ply);
+	const ped = GetPlayerPed(ply);
 
-    const [x, y, z] = GetEntityCoords(ped, false);
-    const [ox, oy, oz] = [0.0, 0.0, 0.0];
-    const [rx, ry, rz] = [0.0, 0.0, 0.0];
+	const [x, y, z] = GetEntityCoords(ped, false);
+	const [ox, oy, oz] = [0.0, 0.0, 0.0];
+	const [rx, ry, rz] = [0.0, 0.0, 0.0];
 
-    await loadModel(model);
+	await loadModel(model);
 
 	// create a object thats not networked
-    const ent = CreateObject(model, x, y, z, false, false, false);
+	const ent = CreateObject(model, x, y, z, false, false, false);
 
 	// remove collisions we don't need them
-    SetEntityCollision(ent, false, false);
+	SetEntityCollision(ent, false, false);
 	// we'll use this to cleanup on if we restart the resource
-    Entity(ent).state.resource = GetCurrentResourceName();
-    // We'll need to delete this later
-    pushEntToPlyMap(serverId, ent);
+	Entity(ent).state.resource = GetCurrentResourceName();
+	// We'll need to delete this later
+	pushEntToPlyMap(serverId, ent);
 
-    AttachEntityToEntity(ent, ped, GetPedBoneIndex(ped, 28422), ox, oy, oz, rx, ry, rz, true, false, false, true, 2, true);
+	AttachEntityToEntity(ent, ped, GetPedBoneIndex(ped, 28422), ox, oy, oz, rx, ry, rz, true, false, false, true, 2, true);
 };
 
 
@@ -300,20 +326,20 @@ const plyEntMap = new Map();
 
 // copy pasta from pma-progbar & made less generic
 AddStateBagChangeHandler("showRadioProp", null, async (bagName, _key, value, _slotId, willReplicate) => {
-    // Don't do anything if we're sending replication
-    if (willReplicate) return;
+	// Don't do anything if we're sending replication
+	if (willReplicate) return;
 
-    const ply = GetPlayerFromStateBagName(bagName);
-    // Not a player
-    if (ply === 0) return;
-    const serverId = GetPlayerServerId(ply);
+	const ply = GetPlayerFromStateBagName(bagName);
+	// Not a player
+	if (ply === 0) return;
+	const serverId = GetPlayerServerId(ply);
 
-    // Check if we already have an entity for this person, if we do then delete it.
-    const ent = plyEntMap.get(serverId);
-    if (ent) {
+	// Check if we already have an entity for this person, if we do then delete it.
+	const ent = plyEntMap.get(serverId);
+	if (ent) {
 		DeleteEntity(ent);
-        plyEntMap.delete(serverId);
-    }
+		plyEntMap.delete(serverId);
+	}
 
 	if (!value) return;
 

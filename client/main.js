@@ -63,8 +63,30 @@ RegisterNuiCallback("pma-radio:uiReady", (_, cb) => {
 	cb([
 		GetConvarInt("radio_maxChannels", 1000),
 		GetConvarInt("radio_allowDecimalPlaces", 2),
-		GetConvarInt("radio_defaultStartChannel", 21)
+		radioHandler.DefaultRadioChannel
 	])
 })
 
+exports("setDefaultChannel", (radioChannel) => {
+	radioHandler.DefaultRadioChannel = radioChannel;
+})
+
+const handleMute = () => {
+	radioHandler.RadioDisabled = !radioHandler.RadioDisabled;
+}
+
+RegisterCommand("m", handleMute);
+RegisterCommand("mute", handleMute);
+
+const handleFrequency = (source, args) => {
+	let freq = args[0];
+	if (!freq) return console.log(`Expected a radio frequency, but didn't get one.`);
+	freq = parseFloat(freq);
+	if (isNaN(freq)) return console.log(`Expected a valid decimal number.`)
+	radioHandler.RadioChannel = freq;
+}
+
+RegisterCommand("f", handleFrequency);
+RegisterCommand("freq", handleFrequency);
+RegisterCommand("frequency", handleFrequency);
 // TODO: Quick commands for mute/frequency changes

@@ -7,7 +7,7 @@ server_scripts {
 }
 client_scripts {
     'config.js',
-    'client/init.js',
+    'client/radio-class.js',
 	'client/main.js'
 }
 
@@ -16,4 +16,5 @@ ui_page 'radio-ui/build/index.html'
 files {
     'radio-ui/build/index.html',
     'radio-ui/build/assets/*',
+    'radio-ui/build/audio/*.ogg',
 }
