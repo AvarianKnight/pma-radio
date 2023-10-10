@@ -285,7 +285,7 @@ class RadioHandler {
 	 * @returns {number} the players current radio volume
 	 */
 	get RadioVolume() {
-		return exports['pma-voice'].getRadioVolume();
+		return exports['pma-voice'].getRadioVolume() * 100;
 	}
 
 	/**
