@@ -5,11 +5,12 @@ game 'gta5'
 --     'config.js',
 -- 	'server/main.js',
 -- }
+
 client_scripts {
     'config.js',
-	'client/prop-handler.js',
     'client/radio-class.js',
-	'client/main.js'
+	'client/main.js',
+	'client/prop-handler.js',
 }
 
 ui_page 'radio-ui/build/index.html'

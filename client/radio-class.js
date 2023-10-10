@@ -22,7 +22,7 @@ function roundTo(n, digits = 2) {
  * @param {number} channel the channel to validate
  * @returns {number} the validated channel number.
  */
-export const getValidatedChannel = (channel, maxChannels = 1000, maxDecimalPlaces = 2) => {
+const getValidatedChannel = (channel, maxChannels = 1000, maxDecimalPlaces = 2) => {
 	let validatedChannel = channel;
 	if (validatedChannel > maxChannels) {
 		validatedChannel = maxChannels;
@@ -41,7 +41,7 @@ class RadioHandler {
 	#firstRadioCall = true;
 	#talkingOnRadio = false;
 	#runningRadioOpenTick = false;
-	#disableRadioAnim = GetConvarInt("radio_useRadioAnim", 1) == 1;
+	#disableRadioAnim = GetConvarInt("radio_useRadioAnim", 1) === 0;
 	#defaultRadio = GetConvarInt("radio_defaultStartChannel", 21);
 
 	constructor() {
@@ -285,7 +285,7 @@ class RadioHandler {
 	 * @returns {number} the players current radio volume
 	 */
 	get RadioVolume() {
-		return exports['pma-voice'].getRadioVolume() * 100;
+		return exports['pma-voice'].getRadioVolume();
 	}
 
 	/**
