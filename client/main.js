@@ -37,6 +37,11 @@ function toggleRadio() {
 onNet("pma-radio:toggleRadioUi", toggleRadio)
 exports("toggleRadio", toggleRadio)
 
+if (GetConvarInt("radio_enableRadioCommands", 1)) {
+	RegisterCommand("radio", toggleRadio)
+	RegisterCommand("r", toggleRadio)
+}
+
 RegisterNuiCallback("pma-radio:closeUi", (_, cb) => {
 	closeRadio()
 	cb({})
@@ -62,7 +67,7 @@ RegisterNuiCallback("pma-radio:uiReady", (_, cb) => {
 	radioHandler.UiReady = true;
 	cb([
 		GetConvarInt("radio_maxChannels", 1000),
-		GetConvarInt("radio_allowDecimalPlaces", 2),
+		GetConvarInt("radio_maxDecimalPlaces", 2),
 		radioHandler.DefaultRadioChannel
 	])
 })
@@ -89,4 +94,3 @@ const handleFrequency = (source, args) => {
 RegisterCommand("f", handleFrequency);
 RegisterCommand("freq", handleFrequency);
 RegisterCommand("frequency", handleFrequency);
-// TODO: Quick commands for mute/frequency changes

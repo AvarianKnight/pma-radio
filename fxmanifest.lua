@@ -1,12 +1,13 @@
 fx_version 'cerulean'
 game 'gta5'
 
-server_scripts {
-    'config.js',
-	'server/main.js',
-}
+-- server_scripts {
+--     'config.js',
+-- 	'server/main.js',
+-- }
 client_scripts {
     'config.js',
+	'client/prop-handler.js',
     'client/radio-class.js',
 	'client/main.js'
 }

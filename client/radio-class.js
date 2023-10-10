@@ -8,6 +8,31 @@ const loadDict = async (dict) => {
 
 const UNARMED = GetHashKey('weapon_unarmed');
 
+
+// https://stackoverflow.com/questions/15762768/javascript-math-round-to-two-decimal-places
+function roundTo(n, digits = 2) {
+	const multiplicator = Math.pow(10, digits);
+
+	n = parseFloat((n * multiplicator).toFixed(11));
+	const test = (Math.round(n) / multiplicator);
+	return +(test.toFixed(digits));
+}
+
+/**
+ * @param {number} channel the channel to validate
+ * @returns {number} the validated channel number.
+ */
+export const getValidatedChannel = (channel, maxChannels = 1000, maxDecimalPlaces = 2) => {
+	let validatedChannel = channel;
+	if (validatedChannel > maxChannels) {
+		validatedChannel = maxChannels;
+	} else if (validatedChannel < 0) {
+		validatedChannel = 0;
+	}
+
+	return roundTo(validatedChannel, maxDecimalPlaces);
+}
+
 class RadioHandler {
 	#radioChannel = 0
 	#uiReady = false;
@@ -16,7 +41,7 @@ class RadioHandler {
 	#firstRadioCall = true;
 	#talkingOnRadio = false;
 	#runningRadioOpenTick = false;
-	#disableRadioAnim = false;
+	#disableRadioAnim = GetConvarInt("radio_useRadioAnim", 1) == 1;
 	#defaultRadio = GetConvarInt("radio_defaultStartChannel", 21);
 
 	constructor() {
@@ -205,8 +230,9 @@ class RadioHandler {
 	 * @param {number} radioChannel the radio channel to set to
 	 */
 	set RadioChannel(radioChannel) {
-		this.#radioChannel = radioChannel;
-		exports['pma-voice'].setRadioChannel(radioChannel);
+		const channel = getValidatedChannel(radioChannel, GetConvarInt("radio_maxChannels", 1000), GetConvarInt("radio_maxDecimalPlaces", 2));
+		this.#radioChannel = channel;
+		exports['pma-voice'].setRadioChannel(channel);
 		// TODO: get rid of radioEnabled in pma-voice
 		if (this.#firstRadioCall) {
 			this.#firstRadioCall = false;
@@ -215,11 +241,9 @@ class RadioHandler {
 		if (this.#uiReady) {
 			SendNUIMessage({
 				action: "updateClientRadioChannel",
-				data: radioChannel
+				data: channel
 			})
 		}
-
-		console.log(`radioChannel got set to ${radioChannel}`)
 	}
 
 	/**
@@ -289,72 +313,3 @@ class RadioHandler {
 
 // add the radio to the global table so everything can use it.
 globalThis.radioHandler = new RadioHandler();
-globalThis.Delay = (ms) => new Promise((res) => setTimeout(res, ms));
-
-globalThis.loadModel = async (modelHash) => {
-	RequestModel(modelHash);
-	const timeout = GetGameTimer() + 500;
-	while (!HasModelLoaded(modelHash)) {
-		if (timeout < GetGameTimer()) {
-			SetModelAsNoLongerNeeded(modelHash);
-			return console.log("Model didn't load");
-		}
-		await Delay(0);
-	}
-
-	SetModelAsNoLongerNeeded(modelHash);
-};
-
-const pushEntToPlyMap = (serverId, ent) => {
-	plyEntMap.set(serverId, ent);
-};
-
-const handleRadioProp = async (ply, serverId) => {
-	const model = GetHashKey("prop_cs_hand_radio");
-
-	const ped = GetPlayerPed(ply);
-
-	const [x, y, z] = GetEntityCoords(ped, false);
-	const [ox, oy, oz] = [0.0, 0.0, 0.0];
-	const [rx, ry, rz] = [0.0, 0.0, 0.0];
-
-	await loadModel(model);
-
-	// create a object thats not networked
-	const ent = CreateObject(model, x, y, z, false, false, false);
-
-	// remove collisions we don't need them
-	SetEntityCollision(ent, false, false);
-	// we'll use this to cleanup on if we restart the resource
-	Entity(ent).state.resource = GetCurrentResourceName();
-	// We'll need to delete this later
-	pushEntToPlyMap(serverId, ent);
-
-	AttachEntityToEntity(ent, ped, GetPedBoneIndex(ped, 28422), ox, oy, oz, rx, ry, rz, true, false, false, true, 2, true);
-};
-
-
-const plyEntMap = new Map();
-
-// copy pasta from pma-progbar & made less generic
-AddStateBagChangeHandler("showRadioProp", null, async (bagName, _key, value, _slotId, willReplicate) => {
-	// Don't do anything if we're sending replication
-	if (willReplicate) return;
-
-	const ply = GetPlayerFromStateBagName(bagName);
-	// Not a player
-	if (ply === 0) return;
-	const serverId = GetPlayerServerId(ply);
-
-	// Check if we already have an entity for this person, if we do then delete it.
-	const ent = plyEntMap.get(serverId);
-	if (ent) {
-		DeleteEntity(ent);
-		plyEntMap.delete(serverId);
-	}
-
-	if (!value) return;
-
-	handleRadioProp(ply, serverId);
-});
-
